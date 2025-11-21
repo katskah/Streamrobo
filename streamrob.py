@@ -10,10 +10,10 @@ st.title("🧪 Détection encre ferrogallique – Roboflow (HTTP API)")
 API_KEY = st.secrets["ROBOFLOW_API_KEY"]
 MODEL_ID = "encre-ferrogallique-2-wy9md/2"
 
-# --- Slider de confiance ---
-confidence_threshold = st.slider("Seuil de confiance", 0.0, 1.0, 0.5, 0.01)
-
 uploaded_file = st.file_uploader("Choisir une image :", type=["jpg","jpeg","png"])
+
+# --- Slider de confiance au-dessus des images ---
+confidence_threshold = st.slider("Seuil de confiance", 0.0, 1.0, 0.5, 0.01)
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
@@ -33,18 +33,16 @@ if uploaded_file:
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
 
+    # Filtrer les prédictions selon le seuil de confiance
     for pred in result.get("predictions", []):
-        # Filtrer selon le seuil de confiance
         if pred["confidence"] < confidence_threshold:
             continue
 
-        # Calculer coordonnées réelles
         x0 = pred["x"] - pred["width"]/2
         y0 = pred["y"] - pred["height"]/2
         x1 = pred["x"] + pred["width"]/2
         y1 = pred["y"] + pred["height"]/2
 
-        # Dessiner rectangle
         draw.rectangle([x0, y0, x1, y1], outline="red", width=4)
         draw.text((x0, y0 - 10), f"{pred['confidence']:.2f}", fill="green")
 
