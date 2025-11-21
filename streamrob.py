@@ -12,8 +12,11 @@ st.title("Roboflow Object Detection - Inférence sur nouvelles images")
 # Initialiser le client Roboflow avec la clé API cachée
 api_key = st.secrets["ROBOFLOW_API_KEY"]
 CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key=api_key
+    api_url="https://detect.roboflow.com",   # ou serverless.roboflow.com selon modèle
+    api_key=api_key,
+    project="encre-ferrogallique-2-wy9md",
+    model="5"   # version
+
 )
 
 # Sélection du modèle Roboflow (paramétrable)
