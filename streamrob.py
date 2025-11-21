@@ -1,64 +1,62 @@
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-import requests
 import io
 
 st.set_page_config(page_title="Détection Roboflow", layout="wide")
+st.title("🧪 Détection avec Roboflow et seuil de confiance")
 
-st.title("🧪 Détection encre ferrogallique – Roboflow (HTTP API)")
+# --- Liste dynamique des modèles Roboflow ---
+# Tu pourras ajouter d'autres modèles à cette liste au fur et à mesure
+models = [
+    "encre-ferrogallique-2-wy9md-instant-1",
+    "encre-ferrogallique-2-wy9md/1",
+    "encre-ferrogallique-2-wy9md/5",
+    "encre-ferrogallique-2-wy9md/3",
+    "encre-ferrogallique-2-wy9md/2",
+]
 
-API_KEY = st.secrets["ROBOFLOW_API_KEY"]
-MODEL_ID = "encre-ferrogallique-2-wy9md/2"
+selected_model = st.selectbox("Choisir le modèle Roboflow :", models)
+st.write(f"Modèle choisi : {selected_model}")
 
-uploaded_file = st.file_uploader("Choisir une image :", type=["jpg","jpeg","png"])
-
+# --- Upload de l'image ---
+uploaded_file = st.file_uploader("Choisir une image :", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    # Convert to bytes
-    buffered = io.BytesIO()
-    image.save(buffered, format="JPEG")
-    img_bytes = buffered.getvalue()
+    # --- Slider pour seuil de confiance ---
+    confidence_threshold = st.slider("Seuil de confiance", 0.0, 1.0, 0.5, 0.01)
+    st.write(f"Seuil choisi : {confidence_threshold:.2f}")
 
-    # --- API HTTP Roboflow ---
-    url = f"https://detect.roboflow.com/{MODEL_ID}?api_key={API_KEY}"
-    response = requests.post(url, files={"file": img_bytes})
-    result = response.json()
+    # --- Exemple de prédictions (à remplacer par l'inférence Roboflow) ---
+    result = {
+        "predictions": [
+            {"x": 150, "y": 100, "width": 100, "height": 50, "confidence": 0.85},
+            {"x": 300, "y": 200, "width": 80, "height": 80, "confidence": 0.6},
+            {"x": 200, "y": 250, "width": 50, "height": 50, "confidence": 0.3},
+        ]
+    }
 
-    # --- Annotate image ---
+    # --- Annoter image selon seuil ---
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
+    font = ImageFont.load_default()
 
-    # Optional: load a font for text
-    try:
-        font = ImageFont.truetype("arial.ttf", size=16)
-    except:
-        font = ImageFont.load_default()
-
-    for pred in result.get("predictions", []):
+    for pred in result["predictions"]:
+        conf = pred["confidence"]
+        if conf < confidence_threshold:
+            continue
         x0 = pred["x"] - pred["width"]/2
         y0 = pred["y"] - pred["height"]/2
         x1 = pred["x"] + pred["width"]/2
         y1 = pred["y"] + pred["height"]/2
-
-        # Draw bounding box
         draw.rectangle([x0, y0, x1, y1], outline="red", width=3)
+        draw.text((x0, y0 - 10), f"{conf:.2f}", fill="green", font=font)
 
-        # Draw confidence bar
-        conf = pred.get("confidence", 0)
-        bar_width = (x1 - x0) * conf  # proportional to confidence
-        draw.rectangle([x0, y1 + 2, x0 + bar_width, y1 + 8], fill="green")
-
-        # Draw confidence text
-        draw.text((x0, y1 + 10), f"{conf:.2f}", fill="white", font=font)
-
-    # --- Display side-by-side ---
+    # --- Affichage côte à côte ---
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("Image originale")
         st.image(image)
-
     with col2:
         st.subheader("Image annotée")
         st.image(annotated)
