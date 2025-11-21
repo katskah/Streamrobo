@@ -35,7 +35,7 @@ if uploaded_file:
     st.image(
         image,
         caption="Image originale",
-        use_container_width=True
+        use_column_width=True
     )
 
     # Sélection du seuil de confiance
@@ -71,7 +71,8 @@ if uploaded_file:
     st.image(
         img_rgb,
         caption="Résultat de la détection",
-        use_container_width=True
+        use_column_width=True
+
     )
 
     # Afficher les détails des détections
